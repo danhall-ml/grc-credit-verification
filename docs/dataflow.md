@@ -1,6 +1,6 @@
 # Credit Verification Dataflow
 
-This is the same flow described in `docs/design.md`, shown in a simple step-by-step diagram.
+This is the same flow described in `README.md`, shown in a simple step-by-step diagram.
 Path: collect evidence -> normalize records -> run checks -> suggest tier -> human review -> final record.
 
 ## System Flow
