@@ -1,0 +1,381 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: RanchVerificationRecord
+description: >
+  Canonical audit-ready record for ranch compliance verification over a reporting
+  period, including automated evaluation outputs and human review actions.
+type: object
+additionalProperties: false
+required:
+  - verification_record_id
+  - ranch_id
+  - protocol
+  - period_start
+  - period_end
+  - status
+  - decision
+  - completeness
+  - claims
+  - conflicts
+  - evidence
+  - provenance
+  - audit_log
+  - created_at
+  - updated_at
+properties:
+  verification_record_id:
+    type: string
+    minLength: 1
+  ranch_id:
+    type: string
+    minLength: 1
+  protocol:
+    $ref: "#/$defs/protocol"
+  period_start:
+    type: string
+    format: date
+  period_end:
+    type: string
+    format: date
+  status:
+    type: string
+    enum:
+      - DRAFT
+      - READY_FOR_REVIEW
+      - APPROVED
+      - REJECTED
+      - REQUESTED_INFO
+      - APPROVED_WITH_OVERRIDE
+  decision:
+    $ref: "#/$defs/decision"
+  completeness:
+    $ref: "#/$defs/completeness"
+  claims:
+    $ref: "#/$defs/claims"
+  conflicts:
+    type: array
+    items:
+      $ref: "#/$defs/conflict_item"
+  evidence:
+    type: array
+    minItems: 1
+    items:
+      $ref: "#/$defs/evidence_ref"
+  provenance:
+    $ref: "#/$defs/provenance"
+  audit_log:
+    type: array
+    minItems: 1
+    items:
+      $ref: "#/$defs/audit_event"
+  created_at:
+    type: string
+    format: date-time
+  updated_at:
+    type: string
+    format: date-time
+allOf:
+  - if:
+      properties:
+        status:
+          const: APPROVED_WITH_OVERRIDE
+    then:
+      properties:
+        decision:
+          required:
+            - override
+      required:
+        - decision
+$defs:
+  protocol:
+    type: object
+    additionalProperties: false
+    required:
+      - protocol_name
+      - protocol_version
+    properties:
+      protocol_name:
+        type: string
+        minLength: 1
+      protocol_version:
+        type: string
+        minLength: 1
+  conflict_item:
+    type: object
+    additionalProperties: false
+    required:
+      - code
+      - severity
+      - summary
+    properties:
+      code:
+        type: string
+        minLength: 1
+      severity:
+        type: string
+        enum: [warn, crit]
+      summary:
+        type: string
+        minLength: 1
+      details:
+        type: object
+  decision:
+    type: object
+    additionalProperties: false
+    required:
+      - recommended_tier
+      - final_tier
+      - confidence
+      - rationale
+      - review_required
+    properties:
+      recommended_tier:
+        type: string
+        enum: [none, good, better, best]
+      final_tier:
+        type: string
+        enum: [none, good, better, best]
+      confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+      rationale:
+        type: string
+        minLength: 1
+      review_required:
+        type: boolean
+      override:
+        type: object
+        additionalProperties: false
+        required:
+          - reason_code
+          - note
+          - reviewer_id
+          - reviewed_at
+        properties:
+          reason_code:
+            type: string
+            minLength: 1
+          note:
+            type: string
+            minLength: 1
+          reviewer_id:
+            type: string
+            minLength: 1
+          reviewed_at:
+            type: string
+            format: date-time
+  completeness:
+    type: object
+    additionalProperties: false
+    required:
+      - overall_status
+      - checks
+    properties:
+      overall_status:
+        type: string
+        enum: [pass, warn, block]
+      checks:
+        type: array
+        minItems: 1
+        items:
+          $ref: "#/$defs/completeness_check"
+  completeness_check:
+    type: object
+    additionalProperties: false
+    required:
+      - check_id
+      - name
+      - severity
+      - passed
+    properties:
+      check_id:
+        type: string
+        minLength: 1
+      name:
+        type: string
+        minLength: 1
+      severity:
+        type: string
+        enum: [info, warn, block]
+      passed:
+        type: boolean
+      details:
+        type: object
+  claims:
+    type: object
+    additionalProperties: false
+    required:
+      - results
+    properties:
+      results:
+        type: array
+        minItems: 1
+        items:
+          $ref: "#/$defs/claim_result"
+  claim_result:
+    type: object
+    additionalProperties: false
+    required:
+      - claim_id
+      - tier
+      - passed
+      - evidence_ids
+    properties:
+      claim_id:
+        type: string
+        minLength: 1
+      tier:
+        type: string
+        enum: [good, better, best]
+      passed:
+        type: boolean
+      details:
+        type: object
+      evidence_ids:
+        type: array
+        items:
+          type: string
+          minLength: 1
+  evidence_ref:
+    type: object
+    additionalProperties: false
+    required:
+      - evidence_id
+      - source_system
+      - evidence_type
+      - uri
+      - snapshot_id
+      - content_hash
+    properties:
+      evidence_id:
+        type: string
+        minLength: 1
+      source_system:
+        type: string
+        enum:
+          - pasturemap
+          - salesforce
+          - soil_lab
+          - hardware
+          - gmp_document
+          - lsa_document
+          - manual_upload
+      evidence_type:
+        type: string
+        minLength: 1
+      uri:
+        type: string
+        minLength: 1
+      snapshot_id:
+        type: string
+        minLength: 1
+      content_hash:
+        type: string
+        pattern: "^[A-Fa-f0-9]{64}$"
+  provenance:
+    type: object
+    additionalProperties: false
+    required:
+      - policy_version
+      - policy_hash
+      - snapshots
+      - connectors
+      - evidence_pack
+    properties:
+      policy_version:
+        type: string
+        minLength: 1
+      policy_hash:
+        type: string
+        pattern: "^[A-Fa-f0-9]{64}$"
+      snapshots:
+        type: array
+        minItems: 1
+        items:
+          $ref: "#/$defs/snapshot_ref"
+      connectors:
+        type: array
+        minItems: 1
+        items:
+          $ref: "#/$defs/connector_ref"
+      evidence_pack:
+        type: object
+        additionalProperties: false
+        required:
+          - manifest_hash
+          - uri
+        properties:
+          manifest_hash:
+            type: string
+            pattern: "^[A-Fa-f0-9]{64}$"
+          uri:
+            type: string
+            minLength: 1
+  snapshot_ref:
+    type: object
+    additionalProperties: false
+    required:
+      - snapshot_id
+      - source_system
+      - extracted_at
+      - payload_hash
+    properties:
+      snapshot_id:
+        type: string
+        minLength: 1
+      source_system:
+        type: string
+        minLength: 1
+      extracted_at:
+        type: string
+        format: date-time
+      payload_hash:
+        type: string
+        pattern: "^[A-Fa-f0-9]{64}$"
+  connector_ref:
+    type: object
+    additionalProperties: false
+    required:
+      - source_system
+      - connector_version
+    properties:
+      source_system:
+        type: string
+        minLength: 1
+      connector_version:
+        type: string
+        minLength: 1
+  audit_event:
+    type: object
+    additionalProperties: false
+    required:
+      - event_id
+      - event_type
+      - actor_type
+      - actor_id
+      - timestamp
+    properties:
+      event_id:
+        type: string
+        minLength: 1
+      event_type:
+        type: string
+        enum:
+          - SYSTEM_EVALUATED
+          - SENT_TO_REVIEW
+          - REVIEW_APPROVED
+          - REVIEW_REJECTED
+          - REVIEW_REQUESTED_INFO
+          - REVIEW_OVERRIDE
+          - RECORD_LOCKED
+      actor_type:
+        type: string
+        enum: [system, human]
+      actor_id:
+        type: string
+        minLength: 1
+      timestamp:
+        type: string
+        format: date-time
+      details:
+        type: object

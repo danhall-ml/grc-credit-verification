@@ -1,0 +1,91 @@
+{
+  "verification_record_id": "vr_2026_0001",
+  "ranch_id": "ranch_101",
+  "protocol": {
+    "protocol_name": "GRC-2026",
+    "protocol_version": "1.0.0"
+  },
+  "period_start": "2026-01-01",
+  "period_end": "2026-01-31",
+  "status": "READY_FOR_REVIEW",
+  "decision": {
+    "recommended_tier": "better",
+    "final_tier": "better",
+    "confidence": 0.89,
+    "rationale": "All required checks passed with no critical conflicts.",
+    "review_required": true
+  },
+  "completeness": {
+    "overall_status": "pass",
+    "checks": [
+      {
+        "check_id": "chk_01",
+        "name": "source-coverage",
+        "severity": "warn",
+        "passed": true
+      }
+    ]
+  },
+  "claims": {
+    "results": [
+      {
+        "claim_id": "c_01",
+        "tier": "better",
+        "passed": true,
+        "evidence_ids": [
+          "ev_01"
+        ]
+      }
+    ]
+  },
+  "conflicts": [
+    {
+      "code": "none",
+      "severity": "warn",
+      "summary": "No blocking conflict."
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "ev_01",
+      "source_system": "gmp_document",
+      "evidence_type": "pdf",
+      "uri": "s3://grc/evidence/ev_01.pdf",
+      "snapshot_id": "snap_01",
+      "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "provenance": {
+    "policy_version": "2026.1",
+    "policy_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "snapshots": [
+      {
+        "snapshot_id": "snap_01",
+        "source_system": "gmp_document",
+        "extracted_at": "2026-02-27T10:00:00Z",
+        "payload_hash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    ],
+    "connectors": [
+      {
+        "source_system": "gmp_document",
+        "connector_version": "v1.2.0"
+      }
+    ],
+    "evidence_pack": {
+      "manifest_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "uri": "s3://grc/evidence-packs/vr_2026_0001.json"
+    }
+  },
+  "audit_log": [
+    {
+      "event_id": "evt_01",
+      "event_type": "SYSTEM_EVALUATED",
+      "actor_type": "system",
+      "actor_id": "verification-engine",
+      "timestamp": "2026-02-27T10:01:00Z"
+    }
+  ],
+  "created_at": "2026-02-27T10:01:00Z",
+  "updated_at": "2026-02-27T10:01:00Z"
+}
