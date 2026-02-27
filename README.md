@@ -34,6 +34,16 @@ The pipeline follows the same path a reviewer already follows mentally, but in a
 
 The hard part is not tier math. The hard part is evidence quality across mixed formats. Some evidence is tabular, some is geospatial, and some is embedded in PDFs. Because of that, the system handles extraction and reconciliation first, then decision logic.
 
+## Document Handling and Reconciliation
+
+One of the main technical problems in this system is that the evidence does not arrive in one clean format. Important facts are spread across PDFs, GeoJSON files, and source-system records, and those sources do not necessarily agree on identifiers, dates, parcel definitions, or naming. That means the hard work happens before tier logic even starts.
+
+In practice, the system needs to do two things well. First, it needs to extract the small set of facts that actually matter for verification. Second, it needs to merge those facts into one stable ranch-period case without pretending the source data is cleaner than it really is.
+
+PDFs are especially difficult because key facts often live inside tables, scans, or inconsistent layouts rather than in clean structured fields. In practice, that means the system may only be able to extract a small set of decision-relevant facts automatically and leave the rest for a reviewer to read directly. GeoJSON and map-based data introduce a different problem: location checks have to line up with the land listed in the documents. Source systems add another layer of complexity because the same ranch or parcel may appear under slightly different names or IDs. If those pieces do not align, the system should not silently smooth that over. It should surface the mismatch and route the case for human review.
+
+That is why the design treats evidence capture, extraction, and reconciliation as first-class parts of the pipeline. The goal is not just to collect files. The goal is to turn messy evidence into a stable case that can be evaluated consistently and explained later.
+
 ## Example Case Walkthrough
 
 For one ranch-period case, the system pulls source snapshots and stores them as immutable evidence. It then resolves ranch identity, aligns period coverage, and checks location consistency between map boundaries, soil samples, and listed parcels.
@@ -81,6 +91,26 @@ Raw evidence (PDFs, GeoJSON, source exports) should be stored in immutable objec
 Normalized records, verification records, and identifier mappings should be stored in a relational database. Geospatial support is important because parcel and sample-location checks are central.
 
 Pipeline execution can start with a scheduled container task. If workflow complexity grows, it can move to a full orchestrator later. Reviewers use a small internal application backed by the same database, with evidence links and append-only reviewer actions.
+
+One concrete AWS-oriented implementation would look like this.
+
+Raw evidence such as PDFs, GeoJSON, and source exports would be stored in S3. Each pull would write to a new time-stamped prefix so prior evidence is never overwritten.
+
+Normalized records, verification records, and identifier mappings would live in Postgres on RDS, with PostGIS enabled to store parcel boundaries, paddocks, and sample locations and to run containment checks directly.
+
+Pipeline execution could initially be handled by an ECS scheduled task that runs periodically. That job would pull source data, write raw snapshots to S3, update normalized records in RDS, and evaluate any ranch-period combinations that are ready for verification. If the workflow grows more complex over time, this could later move into Airflow on MWAA, but that is not required for an initial implementation.
+
+Reviewers would interact with a small internal application, for example a service running on ECS, backed by the same RDS database. The UI would display the verification record, link out to S3 evidence, and write reviewer actions as append-only audit events.
+
+## Additional Thoughts on Document Extraction
+
+One thing that becomes clear when designing a system like this is that the real difficulty is often not in the verification rules themselves. The harder problem is getting the evidence into a usable shape, especially when important details are buried in PDFs or spread across multiple systems.
+
+Because of that, I think it is reasonable to consider a bounded use of an LLM for document extraction. The role would not be to decide whether a ranch should be approved, and it would not replace the verification rules or human review. The role would be much narrower: help pull specific fields from difficult documents so the rest of the pipeline can evaluate them more consistently.
+
+If that approach were used, I would still keep the original evidence, store exactly what was extracted, and validate those extracted fields before using them in case evaluation. In other words, the LLM would only help with turning messy documents into structured inputs. It would not be the system making the final verification decision.
+
+Regardless of whether that approach is used, the main outcome of the design stays the same: every case should follow the same path, every decision should point back to specific evidence, and reviewers should remain in control whenever something is unclear.
 
 ## Review Workflow
 
